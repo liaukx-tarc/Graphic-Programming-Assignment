@@ -396,9 +396,3 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
-*.tlog
-.vs/Assignment/v16/.suo
-*.db
-*.ilk
-*.idb
-*.pdb
