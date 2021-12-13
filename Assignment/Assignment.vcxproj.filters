@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Resource Files\Texture">
+      <UniqueIdentifier>{98f6e28f-f47c-4c78-b775-cc95f7cc1427}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Robot.cpp">
@@ -20,29 +23,35 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="Textures\armor1.bmp">
-      <Filter>Resource Files</Filter>
+    <Image Include="textures\cherry.bmp">
+      <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="Textures\armor2.bmp">
-      <Filter>Resource Files</Filter>
+    <Image Include="textures\cone.bmp">
+      <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="Textures\armor3.bmp">
-      <Filter>Resource Files</Filter>
+    <Image Include="textures\metal.bmp">
+      <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="Textures\armor4.bmp">
-      <Filter>Resource Files</Filter>
+    <Image Include="textures\scope.bmp">
+      <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="Textures\armor5.bmp">
-      <Filter>Resource Files</Filter>
+    <Image Include="textures\Skin1.bmp">
+      <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="Textures\armor6.bmp">
-      <Filter>Resource Files</Filter>
+    <Image Include="textures\Skin2.bmp">
+      <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="Textures\armor7.bmp">
-      <Filter>Resource Files</Filter>
+    <Image Include="textures\Skin3.bmp">
+      <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="Textures\armor8.bmp">
-      <Filter>Resource Files</Filter>
+    <Image Include="textures\Skin4.bmp">
+      <Filter>Resource Files\Texture</Filter>
+    </Image>
+    <Image Include="textures\stick.bmp">
+      <Filter>Resource Files\Texture</Filter>
+    </Image>
+    <Image Include="textures\white.bmp">
+      <Filter>Resource Files\Texture</Filter>
     </Image>
   </ItemGroup>
 </Project>
