@@ -238,21 +238,14 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 			}
 		}
-		else if (wParam == '5') {
-			textureType = 1;
+		else if (wParam == 'T') {
+			textureType ++;
+			if (textureType >= 8)
+			{
+				textureType = 0;
+			}
 		}
-		else if (wParam == '6') {
-			textureType = 2;
-		}
-		else if (wParam == '7') {
-			textureType = 3;
-		}
-		else if (wParam == '8') {
-			textureType = 4;
-		}
-		else if (wParam == '9') {
-			textureType = 5;
-		}
+		
 
 		break;
 
