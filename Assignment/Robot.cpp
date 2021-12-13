@@ -2792,17 +2792,76 @@ void drawOutSideHeel(GLenum type, GLenum gluType, float r, float g, float b)
 	glPopMatrix();
 }
 
-void drawLeg()
+float time = 0;
+float thighAngleLeft = 0, calfAngleLeft = 0, thighAngleRight = 0, calfAngleRight = 0;
+bool isLift = false, isStraight = false, isRightDoneWalk = false, isLeftDoneWalk = false;
+bool isRightWalk = false, isLeftWalk = false;
+float angle = 0, bodyMovement = 0;
+
+void drawLeftLeg()
 {
+	if (isRightDoneWalk)
+	{
+		isLeftWalk = true;
+		isRightWalk = false;
+		isLift = false;
+		isStraight = false;
+
+		thighAngleRight = 0;
+		calfAngleRight = 0;
+		angle = 0;
+
+		isRightDoneWalk = false;
+	}
+
+	if (isLeftWalk)
+	{
+		if (time >= 2)
+		{
+			if (thighAngleLeft < 35 && !isLift)
+			{
+				thighAngleLeft += 0.5f;
+				calfAngleLeft -= 0.5f;
+			}
+
+			else
+			{
+				isLift = true;
+			}
+
+			if (calfAngleLeft < 35 && isLift && !isStraight)
+			{
+				calfAngleLeft += 0.5f;
+				angle -= 0.5f;
+			}
+
+			else if (isLift)
+			{
+				isStraight = true;
+			}
+
+			if (thighAngleLeft > 0 && isStraight)
+			{
+				thighAngleLeft -= 0.5f;
+				calfAngleLeft -= 0.5f;
+				angle -= 0.5f;
+				bodyMovement -= 0.001f;
+			}
+			else if (isStraight)
+			{
+				isLeftDoneWalk = true;
+			}
+		}
+	}
+	
+
 	glPushMatrix();
 	glScalef(0.1f, 0.08f, 0.1f);
 	glTranslatef(-2.8f, -7.5f, -0.8f);
-	//glTranslatef(0.0, 1.6f * thighAngle / 45, -1.6f * thighAngle / 45);
 
 	glPushMatrix();
-	//glRotatef(thighAngle, 1.0f, 0.0f,0.0f);
-
-
+	glTranslatef(0.0, 1.2f * thighAngleLeft / 35, -1.4f * thighAngleLeft / 35);
+	glRotatef(thighAngleLeft, 1.0f, 0.0f, 0.0f);
 	drawThighUp(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);
 	drawThighUp(GL_POLYGON, GLU_FILL, 1.0f, 1.0f, 1.0f);
 
@@ -2811,6 +2870,23 @@ void drawLeg()
 	glPopMatrix();
 
 	glPushMatrix();
+	if (isLeftWalk)
+	{
+		if (!isLift)
+			glTranslatef(0.0, 0.6f * -calfAngleLeft / 35, -2.2f * -calfAngleLeft / 35);
+		else if (!isStraight)
+		{
+			glTranslatef(0.0, 0.6f, -2.2f);
+			glTranslatef(0.0, -0.2f * angle / 35, -0.1f * angle / 35);
+		}
+		else
+		{
+			glTranslatef(0.0, 1.0f * calfAngleLeft / 35, -2.2f * calfAngleLeft / 35);
+		}
+	}
+
+	glPushMatrix();
+	glRotatef(calfAngleLeft / 2, 1.0f, 0.0f, 0.0f);
 	drawCalfUp(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);
 	drawCalfUp(GL_POLYGON, GLU_FILL, 1.0f, 1.0f, 1.0f);
 
@@ -2823,17 +2899,80 @@ void drawLeg()
 	glPopMatrix();
 
 	glPushMatrix();
+	glRotatef(calfAngleLeft / 2, 1.0f, 0.0f, 0.0f);
 	drawOutSideHeel(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);;
 	drawOutSideHeel(GL_POLYGON, GLU_FILL, 1.0f, 1.0f, 1.0f);
 	glPopMatrix();
 
 	glPopMatrix();
+	glPopMatrix();
+}
 
+void drawRightLeg()
+{
+	if (isLeftDoneWalk)
+	{
+		isRightWalk = true;
+		isLeftWalk = false;
+		isLift = false;
+		isStraight = false;
+
+		thighAngleLeft = 0;
+		calfAngleLeft = 0;
+		angle = 0;
+
+		isLeftDoneWalk = false;
+	}
+
+	if (isRightWalk)
+	{
+		if (time >= 2)
+		{
+			if (thighAngleRight < 35 && !isLift)
+			{
+				thighAngleRight += 0.5f;
+				calfAngleRight -= 0.5f;
+			}
+
+			else
+			{
+				isLift = true;
+			}
+
+			if (calfAngleRight < 35 && isLift && !isStraight)
+			{
+				calfAngleRight += 0.5f;
+				angle -= 0.5f;
+			}
+
+			else if (isLift)
+			{
+				isStraight = true;
+			}
+
+			if (thighAngleRight > 0 && isStraight)
+			{
+				thighAngleRight -= 0.5f;
+				calfAngleRight -= 0.5f;
+				angle -= 0.5f;
+				bodyMovement -= 0.001f;
+			}
+			else if (isStraight)
+			{
+				isRightDoneWalk = true;
+			}
+		}
+	}
+	
+
+	//Right
 	glPushMatrix();
 	glScalef(-0.1f, 0.08f, 0.1f);
 	glTranslatef(-2.8f, -7.5f, -0.8f);
 
 	glPushMatrix();
+	glTranslatef(0.0, 1.2f * thighAngleRight / 35, -1.4f * thighAngleRight / 35);
+	glRotatef(thighAngleRight, 1.0f, 0.0f, 0.0f);
 	drawThighUp(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);
 	drawThighUp(GL_POLYGON, GLU_FILL, 1.0f, 1.0f, 1.0f);
 
@@ -2842,6 +2981,23 @@ void drawLeg()
 	glPopMatrix();
 
 	glPushMatrix();
+	if (isRightWalk)
+	{
+		if (!isLift)
+			glTranslatef(0.0, 0.6f * -calfAngleRight / 35, -2.2f * -calfAngleRight / 35);
+		else if (!isStraight)
+		{
+			glTranslatef(0.0, 0.6f, -2.2f);
+			glTranslatef(0.0, -0.2f * angle / 35, -0.1f * angle / 35);
+		}
+		else
+		{
+			glTranslatef(0.0, 1.0f * calfAngleRight / 35, -2.2f * calfAngleRight / 35);
+		}
+	}
+
+	glPushMatrix();
+	glRotatef(calfAngleRight / 2, 1.0f, 0.0f, 0.0f);
 	drawCalfUp(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);
 	drawCalfUp(GL_POLYGON, GLU_FILL, 1.0f, 1.0f, 1.0f);
 
@@ -2854,10 +3010,12 @@ void drawLeg()
 	glPopMatrix();
 
 	glPushMatrix();
+	glRotatef(calfAngleRight / 2, 1.0f, 0.0f, 0.0f);
 	drawOutSideHeel(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);;
 	drawOutSideHeel(GL_POLYGON, GLU_FILL, 1.0f, 1.0f, 1.0f);
 	glPopMatrix();
 
+	glPopMatrix();
 	glPopMatrix();
 }
 
@@ -2894,6 +3052,7 @@ void loadAllTexture()
 	//	glDeleteTextures(1, &textures);
 
 }
+
 void lighting() {
 
 	if (isLightOn) {
@@ -2912,6 +3071,9 @@ void lighting() {
 
 }
 void display() {
+
+	time += 0.1f;
+
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(135 / 255.0f, 206 / 255.0f, 235 / 255.0f, 0.0f);
@@ -2936,18 +3098,21 @@ void display() {
 	glBindTexture(GL_TEXTURE_2D, armorTexture[textureType]);
 
 	glMatrixMode(GL_MODELVIEW);
+	
 	glPushMatrix();
 	glLoadIdentity();
 	glRotated(bodyRotateY, 0, 1, 0);
 	glRotated(bodyRotateX, 1, 0, 0);
 	glTranslatef(0, 0.3, zoom);
 	glTranslatef(pTx, pTy, 0);
-
+	
+	glTranslatef(0, 0, bodyMovement);
 	drawHead();
 	drawBody();
 	drawLeftHand();
 	drawRightHand();
-	drawLeg();
+	drawRightLeg();
+	drawLeftLeg();
 	glPopMatrix();
 
 	//Step 5 :remove texture info
