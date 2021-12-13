@@ -57,6 +57,10 @@ float bodyRotateY;
 float bodyRotateX;
 float lastX = 0, lastY = 0;
 float zoom = 0;
+
+//Camera
+bool viewOrtho = true;
+
 //Leg
 GLUquadricObj* var = NULL;
 
@@ -207,6 +211,21 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		}
 		else if (wParam == '9') {
 			textureType = 5;
+		}
+
+		else if (wParam == VK_TAB)
+		{
+			viewOrtho = !viewOrtho;
+		}
+
+		else if (wParam == 'Z')
+		{
+		bodyRotateY -= 10;
+		}
+
+		else if (wParam == 'X')
+		{
+		bodyRotateY += 10;
 		}
 
 		break;
@@ -2748,17 +2767,57 @@ void drawOutSideHeel(GLenum type, GLenum gluType, float r, float g, float b)
 	glPopMatrix();
 }
 
-void drawLeg()
+float time = 0;
+float thighAngle = 0, calfAngle = 0;
+bool isLift = false, isStraight = false, isDoneStep = false;
+float angle = 0, bodyMovement = 0;
+
+void drawLeftLeg()
 {
+	time += 0.1f;
+	if (time >= 2)
+	{
+		if (thighAngle < 35 && !isLift)
+		{
+			thighAngle += 0.5f;
+			calfAngle -= 0.5f;
+		}
+
+		else 
+		{
+			isLift = true;
+		}
+
+		if (calfAngle < 35 && isLift && !isStraight)
+		{
+			calfAngle += 0.5f;
+			angle -= 0.5f;
+		}
+
+		else if(isLift)
+		{
+			isStraight = true;
+		}
+
+		if (thighAngle > 0 && isStraight)
+		{
+			thighAngle -= 0.5f;
+			calfAngle -= 0.5f;
+			angle -= 0.5f;
+			bodyMovement -= 0.002f;
+		}
+		else if (isStraight)
+		{
+			isDoneStep = true;
+		}
+	}
 	glPushMatrix();
 	glScalef(0.1f, 0.08f, 0.1f);
 	glTranslatef(-2.8f, -7.5f, -0.8f);
-	//glTranslatef(0.0, 1.6f * thighAngle / 45, -1.6f * thighAngle / 45);
 
 	glPushMatrix();
-	//glRotatef(thighAngle, 1.0f, 0.0f,0.0f);
-	
-
+	glTranslatef(0.0, 1.2f * thighAngle / 35, -1.4f * thighAngle / 35);
+	glRotatef(thighAngle, 1.0f, 0.0f,0.0f);
 	drawThighUp(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);
 	drawThighUp(GL_POLYGON, GLU_FILL, 1.0f, 1.0f, 1.0f);
 
@@ -2767,6 +2826,20 @@ void drawLeg()
 	glPopMatrix();
 
 	glPushMatrix();
+	if (!isLift)
+		glTranslatef(0.0, 0.6f * -calfAngle / 35, -2.2f * -calfAngle / 35);
+	else if(!isStraight)
+	{
+		glTranslatef(0.0, 0.6f , -2.2f);
+		glTranslatef(0.0, -0.2f * angle / 35, -0.1f * angle / 35);
+	}
+	else
+	{
+		glTranslatef(0.0, 1.0f * calfAngle / 35, -2.2f * calfAngle / 35);
+	}
+
+	glPushMatrix();
+	glRotatef(calfAngle / 2, 1.0f, 0.0f, 0.0f);
 	drawCalfUp(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);
 	drawCalfUp(GL_POLYGON, GLU_FILL, 1.0f, 1.0f, 1.0f);
 
@@ -2779,12 +2852,18 @@ void drawLeg()
 	glPopMatrix();
 
 	glPushMatrix();
+	glRotatef(calfAngle / 2, 1.0f, 0.0f, 0.0f);
 	drawOutSideHeel(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);;
 	drawOutSideHeel(GL_POLYGON, GLU_FILL, 1.0f, 1.0f, 1.0f);
 	glPopMatrix();
 
 	glPopMatrix();
+	glPopMatrix();
+}
 
+void drawRightLeg()
+{
+	//Right
 	glPushMatrix();
 	glScalef(-0.1f, 0.08f, 0.1f);
 	glTranslatef(-2.8f, -7.5f, -0.8f);
@@ -2817,10 +2896,20 @@ void drawLeg()
 	glPopMatrix();
 }
 
+void inti()
+{
+	var = gluNewQuadric();
+}
+
+
 void display() {
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(135 / 255.0f, 206 / 255.0f, 235 / 255.0f, 0.0f);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
 	if (isTexture == true) {
 		switch (textureType) {
 		case 1:
@@ -2851,14 +2940,22 @@ void display() {
 
 	glPushMatrix();
 	glLoadIdentity();
+	glTranslatef(0, 3, 0);
 	glRotated(bodyRotateY, 0, 1, 0);
 	glRotated(bodyRotateX, 1, 0, 0);
 	glTranslatef(0, 0.3, zoom);
+	
+	glPushMatrix();
+	glTranslatef(0.0f, 0.0f, bodyMovement);
 	drawHead();
 	drawBody();
 	drawLeftHand();
 	drawRightHand();
-	drawLeg();
+	drawRightLeg();
+	drawLeftLeg();
+	glPopMatrix();
+
+	
 	glPopMatrix();
 
 	//Step 5 :remove texture info
@@ -2907,7 +3004,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	MSG msg;
 	ZeroMemory(&msg, sizeof(msg));
 
-	var = gluNewQuadric();
+	inti();
 
 	while (true)
 	{
