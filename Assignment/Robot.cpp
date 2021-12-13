@@ -2750,18 +2750,13 @@ void drawOutSideHeel(GLenum type, GLenum gluType, float r, float g, float b)
 
 void drawLeg()
 {
-	int thighAngle;
-	if (thighAngle < 0)
-	{
-		thighAngle += 0.01f;
-	}
 	glPushMatrix();
 	glScalef(0.1f, 0.08f, 0.1f);
 	glTranslatef(-2.8f, -7.5f, -0.8f);
-	glTranslatef(0.0, 1.6f * thighAngle / 45, -1.6f * thighAngle / 45);
+	//glTranslatef(0.0, 1.6f * thighAngle / 45, -1.6f * thighAngle / 45);
 
 	glPushMatrix();
-	glRotatef(thighAngle, 1.0f, 0.0f,0.0f);
+	//glRotatef(thighAngle, 1.0f, 0.0f,0.0f);
 	
 
 	drawThighUp(GL_LINE_LOOP, GLU_LINE, 0.0f, 0.0f, 0.0f);

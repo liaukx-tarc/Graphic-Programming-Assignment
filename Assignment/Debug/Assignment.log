@@ -118,5 +118,7 @@ C:\Users\user\Desktop\Assignment\Assignment\Robot.cpp(2488,31): warning C4305: '
 C:\Users\user\Desktop\Assignment\Assignment\Robot.cpp(2490,31): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
 C:\Users\user\Desktop\Assignment\Assignment\Robot.cpp(2500,31): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
 C:\Users\user\Desktop\Assignment\Assignment\Robot.cpp(2502,31): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
-C:\Users\user\Desktop\Assignment\Assignment\Robot.cpp(2856,27): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
+C:\Users\user\Desktop\Assignment\Assignment\Robot.cpp(2756,22): warning C4244: '+=': conversion from 'float' to 'int', possible loss of data
+C:\Users\user\Desktop\Assignment\Assignment\Robot.cpp(2768,12): warning C4244: 'argument': conversion from 'int' to 'GLfloat', possible loss of data
+C:\Users\user\Desktop\Assignment\Assignment\Robot.cpp(2865,27): warning C4305: 'argument': truncation from 'double' to 'GLfloat'
   Assignment.vcxproj -> C:\Users\user\Desktop\Assignment\Debug\Assignment.exe
