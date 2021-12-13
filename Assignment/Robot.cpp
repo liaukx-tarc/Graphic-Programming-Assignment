@@ -16,15 +16,12 @@ using namespace std;
 BITMAP BMP;			 //bitmap structure
 HBITMAP hBMP = NULL;//bitmap handle 
 string str;
-GLuint textures = 0;
-int textureType = 1;
-bool isTexture = false;
+GLuint textures;
+int textureType = 0;
 
 void drawCone(double br, double h);
 void drawConeShape(double br, double h);
 void drawScope(double r);
-void icecream();
-bool isIceCream = false;
 //ARM
 float initialArmRotate = 0.0f;
 float initialArmRotate1 = 0.0f;
@@ -53,10 +50,20 @@ void DrawHandle();
 void controlShield();
 bool isShield = false;
 
+//camera & model rotate
 float bodyRotateY;
 float bodyRotateX;
-float lastX = 0, lastY = 0;
+float lastX = 0.0f, lastY = 0.0f;
 float zoom = 0;
+bool switchCamera = true;
+float oNear = 0.0, oFar = 10.0;
+float pZMin = 1.0, pZMax = 17.0;
+float pTx = 0, pTy = 0;
+
+//buttonsetting
+bool isMovingArm = false;
+
+GLuint armorTexture[8];
 //Leg
 GLUquadricObj* var = NULL;
 
@@ -79,10 +86,14 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			lastY = yPos;
 			break;
 		}
+		case WM_LBUTTONDOWN:
+			lastX = GET_X_LPARAM(lParam);
+			lastY = GET_Y_LPARAM(lParam);
+		break;
 	case WM_MOUSEWHEEL:
-		zoom += GET_WHEEL_DELTA_WPARAM(wParam) / 120.0f;
+		zoom += GET_WHEEL_DELTA_WPARAM(wParam) / 300.0f;
 		break;
-		break;
+
 	case WM_KEYDOWN:
 		if (wParam == VK_SPACE) {
 			initialArmRotate = 0.0f;
@@ -99,99 +110,133 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			thumbMove = 0.0f;
 			leftArmMaxAngle = 0.0f;
 			rightArmMaxAngle = 0.0f;
-			isIceCream = false;
-			isTexture = false;
+		}
+		else if (wParam == 'H')
+		{
+			isMovingArm = !isMovingArm;
 		}
 		else if (wParam == 'A') {
 			//AntiClockwise - L ARM
+			if(isMovingArm)
 			armRotate = 0.025f;
+			else
+				pTx += 0.1;
 		}
 		else if (wParam == 'D') {
 			//Clockwise - L ARM
+			if (isMovingArm)
 			armRotate = -0.025f;
+			else
+				pTx -= 0.1;
 		}
 		else if (wParam == 'W') {
 			//AntiClockwise - L ARM
+			if (isMovingArm)
 			armMove = 0.1f;
+			else
+			{
+				pTy -= 0.1;
+			}
 		}
 		else if (wParam == 'S') {
 			//Clockwise - L ARM
+			if (isMovingArm)
 			armMove = -0.1f;
+			else if (pTy < 1)
+			{
+				pTy += 0.1;
+			}
 		}
 		else if (wParam == VK_UP) {
 			//AntiClockwise - R ARM
+			if (isMovingArm)
 			armMove1 = 0.1f;
 		}
 		else if (wParam == VK_DOWN) {
 			//Clockwise - R ARM
+			if (isMovingArm)
 			armMove1 = -0.1f;
 		}
 		else if (wParam == VK_LEFT) {
 			//AntiClockwise - R ARM
+			if (isMovingArm)
 			armRotate1 = -0.025f;
 		}
 		else if (wParam == VK_RIGHT) {
 			//Clockwise - R ARM
+			if (isMovingArm)
 			armRotate1 = 0.025f;
 		}
 		//'Q' - Stop arm move and rotate
 		else if (wParam == 'Q') {
-			armMove = 0.0f;
-			armRotate = 0.0f;
-			armRotate1 = 0.0f;
-			fingerMove = 0.0f;
-			thumbMove = 0.0f;
+			if (isMovingArm)
+			{
+				armMove = 0.0f;
+				armRotate = 0.0f;
+				armRotate1 = 0.0f;
+				fingerMove = 0.0f;
+				thumbMove = 0.0f;
+			}
 		}
 		//'C' - close hand
 		else if (wParam == 'C') {
-			fingerMove = 0.005f;
-			thumbMove = 0.02f;
+			if (isMovingArm)
+			{
+				fingerMove = 0.005f;
+				thumbMove = 0.02f;
+			}
+			else
+			{
+				switchCamera = !switchCamera;
+				pTx = 0, pTy = 0;
+			}
 		}
 		//'O' - open hand
 		else if (wParam == 'O') {
-			fingerMove = -0.005f;
-			thumbMove = -0.02f;
+			if (isMovingArm)
+			{
+				fingerMove = -0.005f;
+				thumbMove = -0.02f;
+			}
 		}
 		else if (wParam == 'K') {// to left lower arm left right
+			if (isMovingArm)
+			{
+				leftArmMaxAngle = 80.0f;
 
-			leftArmMaxAngle = 80.0f;
+				if (initialLeftArmSpeed == 0.0f) {
 
-			if (initialLeftArmSpeed == 0.0f) {
+					leftArmSpeed = speed;
 
-				leftArmSpeed = speed;
+				}
+				if (initialLeftArmSpeed == leftArmMaxAngle) {
 
+					leftArmSpeed = -speed;
+
+				}
+
+				rightArmSpeed = -speed;
 			}
-			if (initialLeftArmSpeed == leftArmMaxAngle) {
-
-				leftArmSpeed = -speed;
-
-			}
-
-			rightArmSpeed = -speed;
 
 		}
 		else if (wParam == 'P') {// to right lower arm left right
+			if (isMovingArm)
+			{
+				rightArmMaxAngle = 80.0f;
 
-			rightArmMaxAngle = 80.0f;
+				if (initialRightArmSpeed == 0.0f) {
 
-			if (initialRightArmSpeed == 0.0f) {
+					rightArmSpeed = speed;
 
-				rightArmSpeed = speed;
+				}
+				if (initialRightArmSpeed == rightArmMaxAngle) {
+
+					rightArmSpeed = -speed;
+
+				}
+				leftArmSpeed = -speed;
 
 			}
-			if (initialRightArmSpeed == rightArmMaxAngle) {
-
-				rightArmSpeed = -speed;
-
-			}
-			leftArmSpeed = -speed;
-
-		}
-		else if (wParam == 'I') {
-			isIceCream = true;
-		}
-		else if (wParam == 'T') {
-			isTexture = true;
 		}
 		else if (wParam == '5') {
 			textureType = 1;
@@ -817,8 +862,8 @@ void adjustFingerMove(float tx, float ty, float tz, float rx, float ry, float rz
 void drawLeftHand() {
 	glPushMatrix();
 	//glLoadIdentity();
-	glScalef(1.25, 1.1, 1.25);
-	glTranslatef(-0.42, -0.47, 0.05);
+	glScalef(1.25, 1, 1.25);
+	glTranslatef(-0.42, -0.45, 0.05);
 	glRotatef(-90, 0.0f, 0.0f, 1.0f);
 
 	glScalef(0.25, 0.25, 0.25);
@@ -948,8 +993,8 @@ void drawLeftHand() {
 void drawRightHand() {
 	glPushMatrix();
 	//glLoadIdentity();
-	glScalef(1.25, 1.1, 1.25);
-	glTranslatef(0.42, -0.47, -0.05);
+	glScalef(1.25, 1, 1.25);
+	glTranslatef(0.42, -0.45, -0.05);
 	glRotatef(-90, 0.0f, 0.0f, 1.0f);
 
 	glScalef(0.25, 0.25, 0.25);
@@ -1000,6 +1045,7 @@ void drawRightHand() {
 	glPopMatrix();
 	glPushMatrix();
 	glTranslatef(-1.4, 0.2, 0.2);
+	glColor3f(0, 0, 0);
 	drawCylinder(0.0, 0.3, 0.8, GL_FILL);
 
 	glPopMatrix();
@@ -1632,51 +1678,6 @@ void drawScope(double r) {
 	gluQuadricTexture(sphere, true);
 	gluSphere(sphere, r, 20, 20);
 	gluDeleteQuadric(sphere);
-}
-
-void icecream() {
-	glPushMatrix();
-	glTranslatef(-0.3, -0.1, -0.45);
-	glScalef(0.15, 0.15, 0.15);
-	glRotatef(45, 0, 1, 0);
-	glRotatef(90, 1.0, 0, 0);
-	//cone
-	GLuint textureArr[5];
-	textureArr[0] = loadTexture("cone.bmp");
-	drawConeShape(0.0, 1.5);
-	glDeleteTextures(1, &textureArr[0]);
-
-	textureArr[1] = loadTexture("scope.bmp");
-	glColor3f(1, 1, 1);
-	drawScope(0.52);
-	glDeleteTextures(1, &textureArr[1]);
-
-	textureArr[2] = loadTexture("white.bmp");
-	glTranslatef(0.0, 0.0, -0.5);
-
-	drawScope(0.45);
-	glDeleteTextures(1, &textureArr[2]);
-
-	glPushMatrix();
-	textureArr[3] = loadTexture("stick.bmp");
-	glTranslatef(0.0, 0.0, -0.5);
-	//chocolate
-	glTranslatef(0.0, -0.6, -0.2);
-	glRotatef(-45, 1.5, 0.0, 0.0);
-	drawCylinder(0.15, 0.15, 0.5, GL_FILL);
-	glDeleteTextures(1, &textureArr[3]);
-	//icecream scope
-	glPopMatrix();
-
-	textureArr[4] = loadTexture("cherry.bmp");
-	//topping
-	glTranslatef(0.0, 0.3, -0.5);
-	glColor3f(1, 0, 0);
-	drawScope(0.2);
-	glDeleteTextures(1, &textureArr[4]);
-	//Step 5 :remove texture info
-	glDisable(GL_TEXTURE_2D);
-	glPopMatrix();
 }
 
 void drawThighUp(GLenum type, GLenum gluType, float r, float g, float b)
@@ -2817,43 +2818,71 @@ void drawLeg()
 	glPopMatrix();
 }
 
+void loadAllTexture()
+{
+	for (int i = 0; i < 8; i++)
+	{
+		str = "textures/armor"+std::to_string(i + 1)+".bmp";
+		armorTexture[i] = loadTexture(str.c_str());
+	}
+	//if (isTexture == true) {
+	//	switch (textureType) {
+	//	case 1:
+	//		str = "textures/armor_texture_1.bmp";
+	//		break;
+	//	case 2:
+	//		str = "textures/cone.bmp";
+	//		break;
+	//	case 3:
+	//		str = "textures/Skin1.bmp";
+	//		break;
+	//	case 4:
+	//		str = "textures/Skin2.bmp";
+	//		break;
+	//	case 5:
+	//		str = "textures/Skin3.bmp";
+	//		break;
+	//	default:
+	//		break;
+	//	}
+	//	textures = loadTexture(str.c_str());
+	//}
+	//else
+	//	glDeleteTextures(1, &textures);
+		
+}
+
 void display() {
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(135 / 255.0f, 206 / 255.0f, 235 / 255.0f, 0.0f);
-	if (isTexture == true) {
-		switch (textureType) {
-		case 1:
-			str = "textures/armor_texture_1.bmp";
-			break;
-		case 2:
-			str = "textures/cone.bmp";
-			break;
-		case 3:
-			str = "textures/Skin1.bmp";
-			break;
-		case 4:
-			str = "textures/Skin2.bmp";
-			break;
-		case 5:
-			str = "textures/Skin3.bmp";
-			break;
-		default:
-			break;
-		}
-		if (isIceCream == true) {
-			icecream();
-		}
-		textures = loadTexture(str.c_str());
+	//camera
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	if (!switchCamera)
+	{
+		glOrtho(-10, 10, -10, 10, oNear, oFar);
+		glTranslatef(0, 0, -8);
+		glRotated(10, 1, 0, 0);
+		glScaled(8, 8, -8);
 	}
 	else
-		glDeleteTextures(1, &textures);
+	{
+		gluPerspective(90, 1, 1, -1);
+		glFrustum(-1, 1, -1, 1, pZMin, pZMax);
+	}
 
+	glBindTexture(GL_TEXTURE_2D, armorTexture[textureType]);
+
+	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
 	glRotated(bodyRotateY, 0, 1, 0);
 	glRotated(bodyRotateX, 1, 0, 0);
 	glTranslatef(0, 0.3, zoom);
+	glTranslatef(pTx, pTy, 0);
+
 	drawHead();
 	drawBody();
 	drawLeftHand();
@@ -2862,7 +2891,7 @@ void display() {
 	glPopMatrix();
 
 	//Step 5 :remove texture info
-	glDisable(GL_TEXTURE_2D);
+
 }
 
 
@@ -2908,6 +2937,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	ZeroMemory(&msg, sizeof(msg));
 
 	var = gluNewQuadric();
+	loadAllTexture();
 
 	while (true)
 	{
@@ -2925,6 +2955,12 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	}
 
 	gluDeleteQuadric(var);
+	glDisable(GL_TEXTURE_2D);
+	DeleteObject(hBMP);
+	for (int i = 0; i < 8; i++)
+	{
+		glDeleteTextures(1, &armorTexture[i]);
+	}
 
 	UnregisterClass(WINDOW_TITLE, wc.hInstance);
 
