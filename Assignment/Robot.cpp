@@ -18,6 +18,14 @@ HBITMAP hBMP = NULL;//bitmap handle
 string str;
 GLuint textures;
 int textureType = 0;
+//LIGHTING
+bool isLightOn = false;
+
+GLfloat amb[] = { 0.0f, 0.0f, 0.0f };
+GLfloat posA[] = { 0.0f, 0.0f, 0.0f };
+
+GLfloat dif[] = { 1.0f, 1.0f, 1.0f };
+GLfloat posD[] = { 0.0f, 0.0f, 0.0f };
 
 void drawCone(double br, double h);
 void drawConeShape(double br, double h);
@@ -244,8 +252,50 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			{
 				textureType = 0;
 			}
+		}//Lighting
+		else if (wParam == '1') {
+		isLightOn = !isLightOn;
 		}
-		
+		if (isLightOn) {
+
+			//Move light up 
+			if (wParam == VK_NUMPAD8) {
+				if (posA[1] <= 1.0f && posD[1] <= 1.0f) {
+					posD[1] += 0.1f;
+				}
+			}
+			//Move light down
+			if (wParam == VK_NUMPAD2) {
+				if (posA[1] >= -1.0f && posD[1] >= -1.0f) {
+					posD[1] -= 0.1f;
+				}
+			}
+			//Move light left 
+			if (wParam == VK_NUMPAD4) {
+				if (posA[0] >= -1.0f && posD[0] >= -1.0f) {
+					posD[0] -= 0.1f;
+				}
+			}
+			//Move light right
+			if (wParam == VK_NUMPAD6) {
+				if (posA[0] <= 1.0f && posD[0] <= 1.0f) {
+					posD[0] += 0.1f;
+				}
+			}
+			//Move light near
+			if (wParam == VK_NUMPAD7) {
+				if (posA[2] >= -1.0f && posD[2] >= -1.0f) {
+					posD[2] -= 0.1f;
+				}
+			}
+			//Move light far 
+			if (wParam == VK_NUMPAD9) {
+				if (posA[2] <= 1.0f && posD[2] <= 1.0f) {
+					posD[2] += 0.1f;
+				}
+			}
+
+		}
 
 		break;
 
@@ -2844,11 +2894,28 @@ void loadAllTexture()
 	//	glDeleteTextures(1, &textures);
 		
 }
+void lighting() {
 
+	if (isLightOn) {
+		glEnable(GL_LIGHTING);
+	}
+	else {
+		glDisable(GL_LIGHTING);
+	}
+	glLightfv(GL_LIGHT1, GL_AMBIENT, amb);
+	glLightfv(GL_LIGHT1, GL_POSITION, posA);
+	glEnable(GL_LIGHT1); // turn on light source
+
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, dif);
+	glLightfv(GL_LIGHT1, GL_POSITION, posD);
+	glEnable(GL_LIGHT1); // turn on light source
+
+}
 void display() {
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(135 / 255.0f, 206 / 255.0f, 235 / 255.0f, 0.0f);
+	lighting();
 	//camera
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
