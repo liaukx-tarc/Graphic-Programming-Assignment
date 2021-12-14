@@ -17,7 +17,9 @@ BITMAP BMP;			 //bitmap structure
 HBITMAP hBMP = NULL;//bitmap handle 
 string str;
 GLuint textures;
-int textureType = 0;
+GLuint armorTexture[8];
+GLuint assetTexture[2];
+int textureType = 1;
 //LIGHTING
 bool isLightOn = false;
 
@@ -60,20 +62,27 @@ bool isShield = false;
 bool isWeaponOn = false;
 
 //camera & model rotate
-float modelRotateX;
 float modelRotateY;
+float modelRotateX;
 float lastX = 0.0f, lastY = 0.0f;
 float zoom = 0;
 bool switchCamera = true;
-float oNear = 0.0, oFar = 10.0;
+float oNear = 0.0, oFar = 20.0;
 float pZMin = 1.0, pZMax = 17.0;
-float pTx = 0, pTy = 0;
 
 //buttonsetting
 bool isMovingArm = false;
 bool isWalking = false;
+bool isJetActive = false;
+float thrusterAngle = 0.0f;
+bool isFlying = false;
+float flyHeight = 0.0f;
+bool isLand = true;
+bool isShooting = false;
 
-GLuint armorTexture[8];
+//laser
+float laserRange = 0.0f;
+
 //Leg
 GLUquadricObj* var = NULL;
 float time = 0;
@@ -96,8 +105,8 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		case MK_LBUTTON:
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
-			modelRotateX -= xPos - lastX;
-			modelRotateY -= yPos - lastY;
+			modelRotateY -= xPos - lastX;
+			modelRotateX -= yPos - lastY;
 			lastX = xPos;
 			lastY = yPos;
 			break;
@@ -125,9 +134,17 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			isRightDoneWalk = false;
 			isLeftDoneWalk = false;
 		}
+		else if (wParam == 'J')
+		{
+			isJetActive = false;
+			thrusterAngle = 0;
+		}
 		break;
 	case WM_KEYDOWN:
 		if (wParam == VK_SPACE) {
+			modelRotateY = 0;
+			modelRotateX = 0;
+			zoom = 0;
 			initialArmRotate = 0.0f;
 			initialArmRotate1 = 0.0f;
 			armRotate = 0.0f;
@@ -149,6 +166,7 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			calfAngleRight = 0;
 			angle = 0;
 			bodyMovement = 0;
+			flyHeight = 0;
 			isLift = false;
 			isStraight = false;
 			isRightDoneWalk = false;
@@ -160,16 +178,30 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		{
 			isMovingArm = !isMovingArm;
 		}
+		else if (wParam == 'J')
+		{
+			isJetActive = true;
+			thrusterAngle = -90;
+			bodyMovement -= 0.1f;
+		}
+		else if (wParam == 'L')
+		{
+			isFlying = !isFlying;
+		}
+		else if (wParam == 'F')
+		{
+			isShooting = true;
+		}
 		else if (wParam == 'A') {
 			//AntiClockwise - L ARM
 			if (isMovingArm)
 				armRotate = 0.025f;
 			else
 			{
-				if (!isWalking)
+				if (!isWalking && isLand)
 				{
 					isWalking = true;
-					bodyRotateY = 90;
+					bodyRotateY = 270;
 					isRightWalk = true;
 				}
 			}
@@ -180,10 +212,10 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				armRotate = -0.025f;
 			else
 			{
-				if (!isWalking)
+				if (!isWalking && isLand)
 				{
 					isWalking = true;
-					bodyRotateY = -90;
+					bodyRotateY = 90;
 					isRightWalk = true;
 				}
 			}
@@ -194,9 +226,10 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				armMove = 0.1f;
 			else
 			{		
-				if (!isWalking)
+				if (!isWalking && isLand)
 				{
 					isWalking = true;
+					bodyRotateY = 0;
 					isRightWalk = true;
 				}
 			}
@@ -207,7 +240,7 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				armMove = -0.1f;
 			else
 			{
-				if (!isWalking)
+				if (!isWalking && isLand)
 				{
 					isWalking = true;
 					bodyRotateY = 180;
@@ -256,7 +289,6 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			else
 			{
 				switchCamera = !switchCamera;
-				pTx = 0, pTy = 0;
 			}
 		}
 		//'O' - open hand
@@ -432,6 +464,32 @@ void color(int r, int g, int b)
 	glColor3f(r / 255.0f, g / 255.0f, b / 255.0f);
 }
 
+void sea(float x, float y, float z)
+{
+	float theta;
+	glPushMatrix();
+	glRotated(90, 1, 0, 0);
+	glScaled(x, z, y);
+	glTranslatef(0, 0, -1);
+	glBegin(GL_POLYGON);
+	for (int i = 0; i < 360; i++) {
+		theta = i * 3.1416 / 180;
+		glVertex2f(0 + 1 * cos(theta), 0 + 1 * sin(theta));
+	}
+	glEnd();
+	gluQuadricDrawStyle(var, GLU_FILL);
+	gluCylinder(var, 1, 1, 1, 30, 30);
+	glPushMatrix();
+	glTranslatef(0, 0, 1);
+	glBegin(GL_POLYGON);
+	for (int i = 0; i < 360; i++) {
+		theta = i * 3.1416 / 180;
+		glVertex2f(0 + 1 * cos(theta), 0 + 1 * sin(theta));
+	}
+	glEnd();
+	glPopMatrix();
+	glPopMatrix();
+}
 //SHAPE
 void drawSphere(double r, GLenum type) {
 	GLUquadricObj* sphere = NULL;
@@ -717,6 +775,9 @@ void cylinder(float x, float y, float z, float topSize)
 		glVertex2f(0 + 1 * cos(theta), 0 + 1 * sin(theta));
 	}
 	glEnd();
+	glBegin(GL_POINT);
+	glVertex2f(0, 0);
+	glEnd();
 	glPopMatrix();
 	glPushMatrix();
 	if (topSize != 0)
@@ -978,6 +1039,14 @@ void drawLeftHand() {
 	glRotatef(-90, 1.0f, 0.0f, 0.0f);
 	glRotatef(-initialArmRotate, 1.0f, 0.0f, 0.0f);
 	initialArmRotate += armRotate;
+	if (initialArmRotate > 8)
+	{
+		initialArmRotate = 8;
+	}
+	else if (initialArmRotate < -8)
+	{
+		initialArmRotate = -8;
+	}
 	glPushMatrix();
 	glRotatef(5, 0.0, 1.0, 0.0);
 	glColor3f(0, 0, 0);
@@ -1124,7 +1193,14 @@ void drawRightHand() {
 	glRotatef(90, 1.0f, 0.0f, 0.0f);
 	glRotatef(initialArmRotate1, 1.0f, 0.0f, 0.0f);
 	initialArmRotate1 += armRotate1;
-
+	if (initialArmRotate1 > 8)
+	{
+		initialArmRotate1 = 8;
+	}
+	else if (initialArmRotate1 < -8)
+	{
+		initialArmRotate1 = -8;
+	}
 	glPushMatrix();
 
 	glRotatef(5, 0.0, 1.0, 0.0);
@@ -1422,7 +1498,9 @@ void drawBody()
 	glTranslatef(0, 2.1, 0.2);
 	glRotated(80, 1, 0, 0);
 	color(255, 127, 80);
+	glBindTexture(GL_TEXTURE_2D, assetTexture[1]);
 	cylinder(0.25, 0.8, 0.25, 1);
+	glBindTexture(GL_TEXTURE_2D, armorTexture[textureType]);
 	glPopMatrix();
 
 	//outer chest btm
@@ -1520,6 +1598,18 @@ void drawBody()
 	glTranslatef(0, 0.8, 0);
 	color(0, 0, 0);
 	cylinder(0.5, 0.6, 0.5, 1);
+	//flame
+	if (isJetActive)
+	{
+		glPushMatrix();
+		glTranslatef(0, 4.8, 0);
+		glScaled(1, 6, 1);
+		color(135, 206, 250);
+		glBindTexture(GL_TEXTURE_2D, assetTexture[0]);
+		cylinder(0.5, 0.8, 0.4, 0);
+		glBindTexture(GL_TEXTURE_2D, armorTexture[textureType]);
+		glPopMatrix();
+	}
 	glPopMatrix();
 	//left laser
 	glPushMatrix();
@@ -1533,9 +1623,20 @@ void drawBody()
 	triangle(GL_LINE_LOOP);
 	glPushMatrix();
 	glScaled(0.2, -2, 1);
-	glTranslatef(-0.5, 0, 0.6);
+	glTranslatef(-0.5, -0.4, 0.5);
 	color(0, 0, 0);
 	cylinder(0.5, 0.8, 0.4, 1);
+	//laser
+	if (isShooting)
+	{
+		glPushMatrix();
+		glTranslatef(0, -laserRange, 0);
+		color(255, 0, 0);
+		glBindTexture(GL_TEXTURE_2D, assetTexture[1]);
+		cylinder(0.25, 0.8, 0.2, 1);
+		glBindTexture(GL_TEXTURE_2D, armorTexture[textureType]);
+		glPopMatrix();
+	}
 	glPopMatrix();
 	glPopMatrix();
 	//right laser
@@ -1550,9 +1651,20 @@ void drawBody()
 	triangle(GL_LINE_LOOP);
 	glPushMatrix();
 	glScaled(0.2, -2, 1);
-	glTranslatef(-0.5, 0, 0.5);
+	glTranslatef(-0.5, -0.4, 0.5);
 	color(0, 0, 0);
 	cylinder(0.5, 0.8, 0.4, 1);
+	//laser
+	if (isShooting)
+	{
+		glPushMatrix();
+		color(255, 0, 0);
+		glTranslatef(0, -laserRange, 0);
+		glBindTexture(GL_TEXTURE_2D, assetTexture[1]);
+		cylinder(0.25, 0.8, 0.2, 1);
+		glBindTexture(GL_TEXTURE_2D, armorTexture[textureType]);
+		glPopMatrix();
+	}
 	glPopMatrix();
 	glPopMatrix();
 
@@ -1561,6 +1673,7 @@ void drawBody()
 	glTranslatef(0, 0.2, 1.3);
 	//sub thruster
 	glPushMatrix();
+	glRotated(thrusterAngle, 1, 0, 0);
 	glRotated(90, 0, 0, 1);
 	glTranslatef(0, 0.7, 0);
 	color(0, 0, 0);
@@ -1571,6 +1684,18 @@ void drawBody()
 	glTranslatef(0, 0.15, 0);
 	color(0, 0, 0);
 	cylinder(0.5, 0.8, 0.4, 0);
+	//flame
+	if (isJetActive || isFlying)
+	{
+		glPushMatrix();
+		glTranslatef(0, -4, 0);
+		glScaled(0.8, -4, 0.8);
+		color(135, 206, 250);
+		glBindTexture(GL_TEXTURE_2D, assetTexture[0]);
+		cylinder(0.5, 0.8, 0.4, 0);
+		glBindTexture(GL_TEXTURE_2D, armorTexture[textureType]);
+		glPopMatrix();
+	}
 	glPopMatrix();
 	//left thruster
 	glPushMatrix();
@@ -1578,6 +1703,18 @@ void drawBody()
 	glTranslatef(0, 0.15, -1.4);
 	color(0, 0, 0);
 	cylinder(0.5, 0.8, 0.4, 0);
+	//flame
+	if (isJetActive || isFlying)
+	{
+		glPushMatrix();
+		glTranslatef(0, -4, 0);
+		glScaled(0.8, -4, 0.8);
+		color(135, 206, 250);
+		glBindTexture(GL_TEXTURE_2D, assetTexture[0]);
+		cylinder(0.5, 0.8, 0.4, 0);
+		glBindTexture(GL_TEXTURE_2D, armorTexture[textureType]);
+		glPopMatrix();
+	}
 	glPopMatrix();
 	glPopMatrix();
 	glScaled(0.5, 1, 1);
@@ -1730,7 +1867,9 @@ void drawHead()
 	glTranslatef(0, 0.6, 0);
 	glScalef(1, 0.5, 1);
 	color(0, 0, 255);
+	glBindTexture(GL_TEXTURE_2D, assetTexture[0]);
 	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_QUADS);
+	glBindTexture(GL_TEXTURE_2D, armorTexture[textureType]);
 	glPopMatrix();
 	glPushMatrix();
 	glRotated(-20, 1, 0, 0);
@@ -1740,7 +1879,7 @@ void drawHead()
 	color(255, 255, 255);
 	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_QUADS);
 	color(0, 0, 0);
-	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_LINE_STRIP);
+	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_LINES);
 	glPopMatrix();
 	glPopMatrix();
 	//back head
@@ -1755,7 +1894,7 @@ void drawHead()
 	color(255, 255, 255);
 	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_QUADS);
 	color(0, 0, 0);
-	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_LINE_STRIP);
+	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_LINES);
 	glPopMatrix();
 	glPushMatrix();
 	glRotated(20, 1, 0, 0);
@@ -1765,7 +1904,7 @@ void drawHead()
 	color(255, 255, 255);
 	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_QUADS);
 	color(0, 0, 0);
-	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_LINE_STRIP);
+	drawQuad(-0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.0, GL_LINES);
 	glPopMatrix();
 	glPopMatrix();
 	glPopMatrix();
@@ -3099,6 +3238,10 @@ void loadAllTexture()
 		str = "textures/armor" + std::to_string(i + 1) + ".bmp";
 		armorTexture[i] = loadTexture(str.c_str());
 	}
+	str = "textures/flame.bmp";
+	assetTexture[0] = loadTexture(str.c_str());
+	str = "textures/laser.bmp";
+	assetTexture[1] = loadTexture(str.c_str());
 }
 
 void lighting() {
@@ -3119,15 +3262,51 @@ void lighting() {
 void display() {
 
 	time += 0.1f;
-
+	if (isShooting)
+	{
+		laserRange += 0.5f;
+	}
+	if (laserRange > 20)
+	{
+		laserRange = 0;
+		isShooting = false;
+	}
+	if (isFlying)
+	{
+		if (flyHeight < 1)
+		{
+			flyHeight += 0.01f;
+		}
+	}
+	else 
+	{
+		if (flyHeight > 0)
+		{
+			flyHeight -= 0.01f;
+		}
+	}
+	if (flyHeight < 0)
+	{
+		flyHeight = 0;
+	}
+	if (flyHeight <= 0)
+	{
+		isLand = true;
+	}
+	else
+	{
+		isLand = false;
+	}
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glShadeModel(GL_SMOOTH);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
 	glClearColor(135 / 255.0f, 206 / 255.0f, 235 / 255.0f, 0.0f);
 	lighting();
 	//camera
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-
 	if (!switchCamera)
 	{
 		glOrtho(-10, 10, -10, 10, oNear, oFar);
@@ -3150,10 +3329,10 @@ void display() {
 	glColorMaterial(GL_FRONT, GL_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
 	//glMaterialfv(GL_FRONT, GL_AMBIENT, ambM);
-	glRotated(modelRotateX, 0, 1, 0);
-	glRotated(modelRotateY, 1, 0, 0);
 	glTranslatef(0, 0.3, zoom);
-	glTranslatef(pTx, pTy, 0);
+	glRotated(modelRotateY, 0, 1, 0);
+	glRotated(modelRotateX, 1, 0, 0);
+
 	glPushMatrix();
 	if (isLightOn)
 	{
@@ -3162,16 +3341,32 @@ void display() {
 		drawSphere(0.1, GL_FILL);
 	}
 	glPopMatrix();
-
 	glRotated(bodyRotateY, 0, 1, 0);
-	glTranslatef(0, 0, bodyMovement);
+	if (!isLand)
+	{
+		glTranslatef(0, flyHeight, 0);
+		glTranslatef(0, 0, bodyMovement);
+	}
+	else
+	{
+		glTranslatef(0, 0, bodyMovement);
+	}
 	drawHead();
 	drawBody();
 	drawLeftHand();
 	drawRightHand();
 	drawRightLeg();
 	drawLeftLeg();
+
+	//sea
+	glDisable(GL_TEXTURE_2D);
+	glPushMatrix();
+	glColor4f(0.275, 0.510, 0.706, 0.85f);
+	glTranslatef(0, -2.5f, 0);
+	sea(30.0f, 2.0f, 30.0f);
 	glPopMatrix();
+	glPopMatrix();
+	glEnable(GL_TEXTURE_2D);
 }
 
 
@@ -3240,6 +3435,10 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE, LPSTR, int nCmdShow)
 	for (int i = 0; i < 8; i++)
 	{
 		glDeleteTextures(1, &armorTexture[i]);
+	}
+	for (int i = 0; i < 2; i++)
+	{
+		glDeleteTextures(1, &assetTexture[i]);
 	}
 
 	UnregisterClass(WINDOW_TITLE, wc.hInstance);

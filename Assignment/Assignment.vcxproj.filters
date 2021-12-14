@@ -23,34 +23,34 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="textures\cherry.bmp">
+    <Image Include="Textures\armor1.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="textures\cone.bmp">
+    <Image Include="Textures\armor2.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="textures\metal.bmp">
+    <Image Include="Textures\armor3.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="textures\scope.bmp">
+    <Image Include="Textures\armor4.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="textures\Skin1.bmp">
+    <Image Include="Textures\armor5.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="textures\Skin2.bmp">
+    <Image Include="Textures\armor6.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="textures\Skin3.bmp">
+    <Image Include="Textures\armor7.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="textures\Skin4.bmp">
+    <Image Include="Textures\armor8.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="textures\stick.bmp">
+    <Image Include="Textures\flame.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
-    <Image Include="textures\white.bmp">
+    <Image Include="Textures\laser.bmp">
       <Filter>Resource Files\Texture</Filter>
     </Image>
   </ItemGroup>
