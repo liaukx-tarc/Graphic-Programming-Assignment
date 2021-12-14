@@ -21,11 +21,10 @@ int textureType = 0;
 //LIGHTING
 bool isLightOn = false;
 
-GLfloat amb[] = { 0.0f, 0.0f, 0.0f };
-GLfloat posA[] = { 0.0f, 0.0f, 0.0f };
+GLfloat amb[] = { 0.3, 0.3, 0.3 };
 
-GLfloat dif[] = { 1.0f, 1.0f, 1.0f };
-GLfloat posD[] = { 0.0f, 0.0f, 0.0f };
+GLfloat dif[] = { 0.3, 0.3, 0.3 };
+GLfloat pos[] = { 0.0f, 0.0f, 0.0f};
 
 void drawCone(double br, double h);
 void drawConeShape(double br, double h);
@@ -59,8 +58,8 @@ void controlShield();
 bool isShield = false;
 
 //camera & model rotate
-float bodyRotateY;
-float bodyRotateX;
+float modelRotateX;
+float modelRotateY;
 float lastX = 0.0f, lastY = 0.0f;
 float zoom = 0;
 bool switchCamera = true;
@@ -70,10 +69,17 @@ float pTx = 0, pTy = 0;
 
 //buttonsetting
 bool isMovingArm = false;
+bool isWalking = false;
 
 GLuint armorTexture[8];
 //Leg
 GLUquadricObj* var = NULL;
+float time = 0;
+float bodyRotateY = 0;
+float thighAngleLeft = 0, calfAngleLeft = 0, thighAngleRight = 0, calfAngleRight = 0;
+bool isLift = false, isStraight = false, isRightDoneWalk = false, isLeftDoneWalk = false;
+bool isRightWalk = false, isLeftWalk = false;
+float angle = 0, bodyMovement = 0;
 
 LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -88,8 +94,8 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 		case MK_LBUTTON:
 			int xPos = GET_X_LPARAM(lParam);
 			int yPos = GET_Y_LPARAM(lParam);
-			bodyRotateY -= xPos - lastX;
-			bodyRotateX -= yPos - lastY;
+			modelRotateX -= xPos - lastX;
+			modelRotateY -= yPos - lastY;
 			lastX = xPos;
 			lastY = yPos;
 			break;
@@ -101,7 +107,23 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 	case WM_MOUSEWHEEL:
 		zoom += GET_WHEEL_DELTA_WPARAM(wParam) / 300.0f;
 		break;
-
+	case WM_KEYUP:
+		if (wParam == 'W' || wParam == 'A' || wParam == 'S' || wParam == 'D')
+		{
+			isWalking = false;
+			isLeftWalk = false;
+			isRightWalk = false;
+			thighAngleLeft = 0;
+			calfAngleLeft = 0;
+			thighAngleRight = 0;
+			calfAngleRight = 0;
+			angle = 0;
+			isLift = false;
+			isStraight = false;
+			isRightDoneWalk = false;
+			isLeftDoneWalk = false;
+		}
+		break;
 	case WM_KEYDOWN:
 		if (wParam == VK_SPACE) {
 			initialArmRotate = 0.0f;
@@ -112,12 +134,25 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			initialArmMove1 = 0.0f;
 			armMove = 0.0f;
 			armMove1 = 0.0f;
+			bodyRotateY = 0;
 			initialFingerMove = 0.0f;
 			fingerMove = 0.0f;
 			initialThumbMove = 0.0f;
 			thumbMove = 0.0f;
 			leftArmMaxAngle = 0.0f;
 			rightArmMaxAngle = 0.0f;
+			thighAngleLeft = 0;
+			calfAngleLeft = 0;
+			thighAngleRight = 0;
+			calfAngleRight = 0;
+			angle = 0;
+			bodyMovement = 0;
+			isLift = false;
+			isStraight = false;
+			isRightDoneWalk = false;
+			isLeftDoneWalk = false;
+			isRightWalk = false;
+			isLeftWalk = false;
 		}
 		else if (wParam == 'H')
 		{
@@ -128,31 +163,54 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 			if (isMovingArm)
 				armRotate = 0.025f;
 			else
-				pTx += 0.1;
+			{
+				if (!isWalking)
+				{
+					isWalking = true;
+					bodyRotateY = 90;
+					isRightWalk = true;
+				}
+			}
 		}
 		else if (wParam == 'D') {
 			//Clockwise - L ARM
 			if (isMovingArm)
 				armRotate = -0.025f;
 			else
-				pTx -= 0.1;
+			{
+				if (!isWalking)
+				{
+					isWalking = true;
+					bodyRotateY = -90;
+					isRightWalk = true;
+				}
+			}
 		}
 		else if (wParam == 'W') {
 			//AntiClockwise - L ARM
 			if (isMovingArm)
 				armMove = 0.1f;
 			else
-			{
-				pTy -= 0.1;
+			{		
+				if (!isWalking)
+				{
+					isWalking = true;
+					isRightWalk = true;
+				}
 			}
 		}
 		else if (wParam == 'S') {
 			//Clockwise - L ARM
 			if (isMovingArm)
 				armMove = -0.1f;
-			else if (pTy < 1)
+			else
 			{
-				pTy += 0.1;
+				if (!isWalking)
+				{
+					isWalking = true;
+					bodyRotateY = 180;
+					isRightWalk = true;
+				}
 			}
 		}
 		else if (wParam == VK_UP) {
@@ -260,38 +318,38 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 
 			//Move light up 
 			if (wParam == VK_NUMPAD8) {
-				if (posA[1] <= 1.0f && posD[1] <= 1.0f) {
-					posD[1] += 0.1f;
+				if (pos[1] <= 5.0f) {
+					pos[1] += 0.1f;
 				}
 			}
 			//Move light down
 			if (wParam == VK_NUMPAD2) {
-				if (posA[1] >= -1.0f && posD[1] >= -1.0f) {
-					posD[1] -= 0.1f;
+				if (pos[1] >= -5.0f) {
+					pos[1] -= 0.1f;
 				}
 			}
 			//Move light left 
 			if (wParam == VK_NUMPAD4) {
-				if (posA[0] >= -1.0f && posD[0] >= -1.0f) {
-					posD[0] -= 0.1f;
+				if (pos[0] >= -5.0f) {
+					pos[0] -= 0.1f;
 				}
 			}
 			//Move light right
 			if (wParam == VK_NUMPAD6) {
-				if (posA[0] <= 1.0f && posD[0] <= 1.0f) {
-					posD[0] += 0.1f;
+				if (pos[0] <= 5.0f) {
+					pos[0] += 0.1f;
 				}
 			}
 			//Move light near
 			if (wParam == VK_NUMPAD7) {
-				if (posA[2] >= -1.0f && posD[2] >= -1.0f) {
-					posD[2] -= 0.1f;
+				if (pos[2] >= -5.0f) {
+					pos[2] -= 0.1f;
 				}
 			}
 			//Move light far 
 			if (wParam == VK_NUMPAD9) {
-				if (posA[2] <= 1.0f && posD[2] <= 1.0f) {
-					posD[2] += 0.1f;
+				if (pos[2] <= 5.0f ) {
+					pos[2] += 0.1f;
 				}
 			}
 
@@ -2792,11 +2850,7 @@ void drawOutSideHeel(GLenum type, GLenum gluType, float r, float g, float b)
 	glPopMatrix();
 }
 
-float time = 0;
-float thighAngleLeft = 0, calfAngleLeft = 0, thighAngleRight = 0, calfAngleRight = 0;
-bool isLift = false, isStraight = false, isRightDoneWalk = false, isLeftDoneWalk = false;
-bool isRightWalk = false, isLeftWalk = false;
-float angle = 0, bodyMovement = 0;
+
 
 void drawLeftLeg()
 {
@@ -3026,31 +3080,6 @@ void loadAllTexture()
 		str = "textures/armor" + std::to_string(i + 1) + ".bmp";
 		armorTexture[i] = loadTexture(str.c_str());
 	}
-	//if (isTexture == true) {
-	//	switch (textureType) {
-	//	case 1:
-	//		str = "textures/armor_texture_1.bmp";
-	//		break;
-	//	case 2:
-	//		str = "textures/cone.bmp";
-	//		break;
-	//	case 3:
-	//		str = "textures/Skin1.bmp";
-	//		break;
-	//	case 4:
-	//		str = "textures/Skin2.bmp";
-	//		break;
-	//	case 5:
-	//		str = "textures/Skin3.bmp";
-	//		break;
-	//	default:
-	//		break;
-	//	}
-	//	textures = loadTexture(str.c_str());
-	//}
-	//else
-	//	glDeleteTextures(1, &textures);
-
 }
 
 void lighting() {
@@ -3061,15 +3090,13 @@ void lighting() {
 	else {
 		glDisable(GL_LIGHTING);
 	}
-	glLightfv(GL_LIGHT1, GL_AMBIENT, amb);
-	glLightfv(GL_LIGHT1, GL_POSITION, posA);
-	glEnable(GL_LIGHT1); // turn on light source
+	glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
 
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, dif);
-	glLightfv(GL_LIGHT1, GL_POSITION, posD);
-	glEnable(GL_LIGHT1); // turn on light source
-
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, dif);
+	glLightfv(GL_LIGHT0, GL_POSITION, pos);
+	glEnable(GL_LIGHT0); // turn on light source
 }
+
 void display() {
 
 	time += 0.1f;
@@ -3101,11 +3128,23 @@ void display() {
 	
 	glPushMatrix();
 	glLoadIdentity();
-	glRotated(bodyRotateY, 0, 1, 0);
-	glRotated(bodyRotateX, 1, 0, 0);
+	glColorMaterial(GL_FRONT, GL_DIFFUSE);
+	glEnable(GL_COLOR_MATERIAL);
+	//glMaterialfv(GL_FRONT, GL_AMBIENT, ambM);
+	glRotated(modelRotateX, 0, 1, 0);
+	glRotated(modelRotateY, 1, 0, 0);
 	glTranslatef(0, 0.3, zoom);
 	glTranslatef(pTx, pTy, 0);
-	
+	glPushMatrix();
+	if (isLightOn)
+	{
+		glTranslatef(pos[0], pos[1], pos[2]);
+		color(255, 0, 0);
+		drawSphere(0.1, GL_FILL);
+	}
+	glPopMatrix();
+
+	glRotated(bodyRotateY, 0, 1, 0);
 	glTranslatef(0, 0, bodyMovement);
 	drawHead();
 	drawBody();
