@@ -57,6 +57,8 @@ void DrawHandle();
 void controlShield();
 bool isShield = false;
 
+bool isWeaponOn = false;
+
 //camera & model rotate
 float modelRotateX;
 float modelRotateY;
@@ -353,6 +355,9 @@ LRESULT WINAPI WindowProcedure(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam
 				}
 			}
 
+		}//weapon
+		else if (wParam == '2') {
+			isWeaponOn = !isWeaponOn;
 		}
 
 		break;
@@ -972,7 +977,7 @@ void drawLeftHand() {
 	//Left, Right to rotate
 	glRotatef(-90, 1.0f, 0.0f, 0.0f);
 	glRotatef(-initialArmRotate, 1.0f, 0.0f, 0.0f);
-
+	initialArmRotate += armRotate;
 	glPushMatrix();
 	glRotatef(5, 0.0, 1.0, 0.0);
 	glColor3f(0, 0, 0);
@@ -1072,6 +1077,18 @@ void drawLeftHand() {
 	glTranslatef(0.5, -0.65, -1.0);
 	glScalef(2, 2, 2);
 	controlShield();
+	if (isWeaponOn) {
+		//glScalef(0.5, 2, 0.5);
+		glRotatef(90, 1, 0, 0);
+		glTranslatef(-0.1,-0.2,-0.4);
+		glBegin(GL_TRIANGLES);
+		glVertex2f(0.19, 0.0);
+
+		glVertex2f(-0.19, 0.0);
+		glVertex2f(0.0, -1.5);
+
+		glEnd();
+	}
 	glPopMatrix();
 
 	//joint
@@ -1089,6 +1106,8 @@ void drawLeftHand() {
 	glPopMatrix();
 	glPopMatrix();
 	glPopMatrix();
+
+	
 }
 
 void drawRightHand() {
@@ -3153,9 +3172,6 @@ void display() {
 	drawRightLeg();
 	drawLeftLeg();
 	glPopMatrix();
-
-	//Step 5 :remove texture info
-
 }
 
 
